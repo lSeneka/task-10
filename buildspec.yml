@@ -1,0 +1,28 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+  pre_build:
+    commands:
+      - echo "Installing Lambda deps..."
+      - cd src && npm ci --omit=dev && cd ..
+  build:
+    commands:
+      - echo "Build started on $(date)"
+      # (Optional) run your tests here if you have any, e.g. npm test
+  post_build:
+    commands:
+      - echo "Packaging SAM template to S3 bucket: dk-bucket-915116534218"
+      - sam validate
+      - sam package \
+        --s3-bucket dk-bucket-915116534218 \
+        --template-file template.yml \
+        --output-template-file outputSamTemplate.yml
+      - echo "Build completed on $(date)"
+
+artifacts:
+  files:
+    - outputSamTemplate.yml
+    - template.yml
