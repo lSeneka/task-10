@@ -19,12 +19,12 @@ phases:
       # (Optional) run your tests here if you have any, e.g. npm test
   post_build:
     commands:
-      - echo "Packaging SAM template to S3 bucket: dk-bucket-915116534218"
       - sam validate
-      - sam package \
-        --s3-bucket dk-bucket-915116534218 \
-        --template-file template.yml \
-        --output-template-file outputSamTemplate.yml
+      - |
+        sam package \
+          --s3-bucket dk-bucket-915116534218 \
+          --template-file template.yml \
+          --output-template-file outputSamTemplate.yml
       - echo "Build completed on $(date)"
 
 artifacts:
