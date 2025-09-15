@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: dk-UploadsNotificationFunction – SQS -> Lambda -> SNS (reuses existing IAM role)
+
+Parameters:
+  TopicArn:
+    Type: String
+    Description: ARN of the existing SNS topic
+  SQSQueueArn:
+    Type: String
+    Description: ARN of the existing SQS queue
+  FunctionName:
+    Type: String
+    Default: dk-UploadsNotificationFunction
+    Description: Lambda function name to (re)deploy
+  LambdaRuntime:
+    Type: String
+    Default: nodejs20.x
+    AllowedValues:
+      - nodejs18.x
+      - nodejs20.x
+
+Resources:
+  UploadsNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Ref FunctionName
+      CodeUri: src/
+      Handler: index.handler
+      Runtime: !Ref LambdaRuntime
+      Architectures: [ x86_64 ]
+      Timeout: 60
+      MemorySize: 128
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/CustomLambdaAccessRoleSQS_SNS
+      Environment:
+        Variables:
+          TOPIC_ARN_NAME: !Ref TopicArn
+          REGION: !Ref AWS::Region
+      Events:
+        FromSQS:
+          Type: SQS
+          Properties:
+            Queue: !Ref SQSQueueArn
+            BatchSize: 10
+            MaximumBatchingWindowInSeconds: 5
+      AutoPublishAlias: live
+      DeploymentPreference:
+        Type: Canary10Percent10Minutes
+
+Outputs:
+  FunctionName:
+    Value: !Ref UploadsNotificationFunction
+  FunctionAliasArn:
+    Value: !Ref UploadsNotificationFunction.Alias
